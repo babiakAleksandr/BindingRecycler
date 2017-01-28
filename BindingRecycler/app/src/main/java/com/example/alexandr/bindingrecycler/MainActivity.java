@@ -9,13 +9,16 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+
 import com.example.alexandr.bindingrecycler.model.User;
 import com.example.alexandr.bindingrecycler.net.ApiService;
 import com.example.alexandr.bindingrecycler.net.RetrofitBuilder;
 import com.example.alexandr.bindingrecycler.service.TimeService;
 import com.example.alexandr.bindingrecycler.ui.BaseActivity;
 import com.example.alexandr.bindingrecycler.ui.PhotoAdapter;
+
 import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -26,7 +29,7 @@ public class MainActivity extends BaseActivity {
     private RecyclerView mRecyclerView;
     private PhotoAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
-    private AlarmManager alarmManager;
+    private AlarmManager am;
     public static final String PHOTO_OBJECT = "photoObject";
 
     @Override
@@ -39,6 +42,8 @@ public class MainActivity extends BaseActivity {
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
         loadPhotos();
+
+
     }
 
     @Override
@@ -64,8 +69,22 @@ public class MainActivity extends BaseActivity {
                     }
                 });
                 mRecyclerView.setAdapter(mAdapter);
-                addTouchOnRecyclerView();
 
+                ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+                    @Override
+                    public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                        return false;
+                    }
+
+                    @Override
+                    public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                        //Remove swiped item from list and notify the RecyclerView
+                        mAdapter.removeItem(viewHolder.getAdapterPosition());
+                    }
+                };
+
+                ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+                itemTouchHelper.attachToRecyclerView(mRecyclerView);
             }
 
             @Override
@@ -76,28 +95,11 @@ public class MainActivity extends BaseActivity {
 
     }
 
-    private void addTouchOnRecyclerView() {
-        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-            @Override
-            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
-                mAdapter.removeItem(viewHolder.getAdapterPosition());
-            }
-        };
-
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
-        itemTouchHelper.attachToRecyclerView(mRecyclerView);
-    }
-
     private void createAlarmManager() {
-        Intent timeServiceIntent = new Intent(this, TimeService.class);
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, timeServiceIntent, 0);
-        alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 10_000, 120_000, pendingIntent);
+        Intent intent = new Intent(this, TimeService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
+        am = (AlarmManager) getSystemService(ALARM_SERVICE);
+        am.setRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 10_000, 120_000, pendingIntent);
     }
 
 }
