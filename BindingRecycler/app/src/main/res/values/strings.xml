@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">BindingRecycler</string>
+    <string name="def_image_url">https://avatars.githubusercontent.com/u/3?v=3</string>
+</resources>
